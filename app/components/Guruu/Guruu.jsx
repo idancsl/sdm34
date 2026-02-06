@@ -52,7 +52,7 @@ export default function Guruu() {
             scrollbar-hide
           "
         >
-          {data.map((guru) => (
+          {Array.isArray(data) && data.map((guru) => (
             <motion.div
               key={guru.id}
               whileHover={{ y: -6 }}
