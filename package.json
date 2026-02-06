@@ -47,6 +47,7 @@
     "swr": "^2.4.0",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",
+    "vercel-build": "npm run prepare && next build",
     "zod": "^4.3.6"
   },
   "devDependencies": {
