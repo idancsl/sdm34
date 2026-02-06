@@ -1,15 +1,8 @@
-import { defineConfig } from "prisma/config";
-import dotenv from "dotenv";
+import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
 
-dotenv.config(); // pastikan membaca .env
-
-export default defineConfig({
-  schema: "prisma/schema.prisma",
-  datasource: {
-    url: process.env.DATABASE_URL!, // <- harus ada tanda `!` untuk TypeScript
-  },
-  migrations: {
-    path: "prisma/migrations",
-  },
-});
-
+export const prismaConfig = {
+  adapter: new PrismaPg({
+    connectionString: process.env.DATABASE_URL, // Supabase Postgres URL
+  }),
+};
