@@ -5,8 +5,9 @@ import SectionSejarah from "../components/SectionSejarah/SectionSejarah";
 import SambutanKepsek from "../components/Sambutan/SambutanKepsek";
 import Prestasi from "../components/Prestasi/Prestasi";
 import Footer from "../components/Footer/Footer";
+import Guruu from "../components/Guruu/Guruu";
 // import Guru from "../components/Guru/Guruu";
-import Guruu from "../components/Guru/Guruu";
+
 
 
 export default function Home() {
