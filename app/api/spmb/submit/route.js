@@ -1,59 +1,70 @@
-import { supabase } from "@/lib/supabase";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { supabaseServer } from "@/lib/supabase";
 
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    // Ambil semua field
-    const fields = [
-      "nama",
-      "tempatLahir",
-      "tanggalLahir",
-      "jenisKelamin",
-      "namaAyah",
-      "namaIbu",
-      "hp",
-      "alamat",
-    ];
+    const nama = formData.get("nama");
+    if (!nama) throw new Error("Nama wajib diisi");
 
-    const data = {};
-    for (let f of fields) {
-      data[f] = formData.get(f);
-    }
+    const slugNama = nama
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-");
 
-    // Upload file ke Supabase Storage
-    const fileFields = ["akte", "kk", "ijazah", "pasFoto", "buktiPembayaran"];
-    for (let f of fileFields) {
-      const file = formData.get(f);
-      if (!file) continue;
+    async function uploadFile(file, filename) {
+      if (!file) return null;
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${f}.${fileExt}`;
+      const filePath = `pendaftar/${slugNama}/${filename}`;
 
-      const { data: uploadData, error } = await supabase.storage
+      console.log("UPLOAD PATH:", filePath);
+
+      const { error } = await supabaseServer.storage
         .from("spmb")
-        .upload(fileName, buffer, { cacheControl: "3600", upsert: true });
+        .upload(filePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error("UPLOAD ERROR:", error);
+        throw error;
+      }
 
-      const { publicUrl } = supabase.storage
-        .from("spmb")
-        .getPublicUrl(uploadData.path);
-
-      data[f] = publicUrl;
+      return `${process.env.SUPABASE_URL}/storage/v1/object/public/spmb/${filePath}`;
     }
 
-    // Save to database
-    data.tanggalLahir = new Date(data.tanggalLahir);
+    const data = {
+      nama,
+      tempatLahir: formData.get("tempatLahir"),
+      tanggalLahir: new Date(formData.get("tanggalLahir")),
+      jenisKelamin: formData.get("jenisKelamin"),
+      namaAyah: formData.get("namaAyah"),
+      namaIbu: formData.get("namaIbu"),
+      hp: formData.get("hp"),
+      alamat: formData.get("alamat"),
+
+      pasFoto: await uploadFile(formData.get("pasFoto"), "pasfoto.jpg"),
+      akte: await uploadFile(formData.get("akte"), "akte.jpg"),
+      kk: await uploadFile(formData.get("kk"), "kk.jpg"),
+      ijazah: await uploadFile(formData.get("ijazah"), "ijazah.jpg"),
+      buktiPembayaran: await uploadFile(
+        formData.get("buktiPembayaran"),
+        "bukti-pembayaran.jpg"
+      ),
+    };
+
     await prisma.pendaftar.create({ data });
 
-    return new Response(JSON.stringify({ success: true }), { status: 201 });
-  } catch (err) {
-    console.error("SPMB SUBMIT ERROR:", err);
-    return new Response(JSON.stringify({ success: false, message: err.message }), {
-      status: 500,
-    });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("SPMB SUBMIT ERROR:", error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }

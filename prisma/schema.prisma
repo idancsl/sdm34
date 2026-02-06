@@ -34,11 +34,12 @@ model Pendaftar {
   namaIbu         String
   hp              String
   alamat          String
-  akte            String
-  kk              String
-  ijazah          String
-  pasFoto         String
-  buktiPembayaran String
+
+  akte            String?
+  kk              String?
+  ijazah          String?
+  pasFoto         String?
+  buktiPembayaran String?
   createdAt       DateTime @default(now())
   verified        Boolean  @default(false)
 }
