@@ -1,10 +1,12 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
+const prisma = new PrismaClient();
+
 const handler = NextAuth({
-  secret: process.env.NEXTAUTH_SECRET, // wajib ada untuk NextAuth
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Admin",
@@ -13,31 +15,22 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
-          throw new Error("Username dan password harus diisi");
-        }
+        if (!credentials?.username || !credentials?.password) throw new Error("Isi semua field");
 
         const admin = await prisma.admin.findUnique({
           where: { username: credentials.username },
         });
 
-        if (!admin) {
-          throw new Error("Admin tidak ditemukan");
-        }
+        if (!admin) throw new Error("Admin tidak ditemukan");
 
         const isValid = await bcrypt.compare(credentials.password, admin.password);
-        if (!isValid) {
-          throw new Error("Password salah");
-        }
+        if (!isValid) throw new Error("Password salah");
 
-        // user object yang masuk ke session
         return { id: admin.id, name: admin.name, username: admin.username };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) token.user = user;
@@ -48,11 +41,7 @@ const handler = NextAuth({
       return session;
     },
   },
-  pages: {
-    signIn: "/admin/login", // arahkan login admin ke halaman khusus
-    error: "/admin/login", // arahkan error login juga ke halaman login
-  },
-  debug: process.env.NODE_ENV === "development", // aktifkan log saat dev
+  pages: { signIn: "/admin/login", error: "/admin/login" },
 });
 
 export { handler as GET, handler as POST };
