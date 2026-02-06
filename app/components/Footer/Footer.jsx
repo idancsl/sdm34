@@ -28,13 +28,13 @@ export default function Footer() {
           <h3 className="font-bold mb-2">Sosial Media</h3>
           <div className="flex gap-4 mt-2">
             <Button asChild variant="ghost">
-              <a href="instagram.com/sdm34cikupa"><Instagram /></a>
+              <a href="https://www.instagram.com/sdm34cikupa"><Instagram /></a>
             </Button>
             <Button asChild variant="ghost">
-              <a href="#"><Youtube /></a>
+              <a href="https://www.youtube.com/sdm34cikupa"><Youtube /></a>
             </Button>
             <Button asChild variant="ghost">
-              <a href="#"><Facebook /></a>
+              <a href="https://www.facebook.com/sdm34cikupa"><Facebook /></a>
             </Button>
           </div>
         </div>

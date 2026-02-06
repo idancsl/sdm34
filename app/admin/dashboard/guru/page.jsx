@@ -232,7 +232,7 @@ export default function GuruPage() {
               </div>
 
               <div>
-                <Label>Mata Pelajaran</Label>
+                <Label>Jabatan</Label>
                 <Input
                   value={form.subject}
                   onChange={(e) =>

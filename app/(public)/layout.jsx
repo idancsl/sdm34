@@ -11,7 +11,7 @@ export default function PublicLayout({ children }) {
       <Navbar/>
 
       <main>{children}</main>
-      <Footer/>
+      
     </SessionProvider>
   );
 }
