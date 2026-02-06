@@ -1,65 +1,59 @@
-import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
-import fs from "fs";
-import path from "path";
 
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    const namaRaw = formData.get("nama");
-    const slugNama = namaRaw
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-");
+    // Ambil semua field
+    const fields = [
+      "nama",
+      "tempatLahir",
+      "tanggalLahir",
+      "jenisKelamin",
+      "namaAyah",
+      "namaIbu",
+      "hp",
+      "alamat",
+    ];
 
-    const uploadDir = path.join(
-      process.cwd(),
-      "public/uploads",
-      slugNama
-    );
-
-    // BUAT FOLDER PER PENDAFTAR
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const data = {};
+    for (let f of fields) {
+      data[f] = formData.get(f);
     }
 
-    async function saveFile(file, filename) {
-      if (!file) return "";
+    // Upload file ke Supabase Storage
+    const fileFields = ["akte", "kk", "ijazah", "pasFoto", "buktiPembayaran"];
+    for (let f of fileFields) {
+      const file = formData.get(f);
+      if (!file) continue;
+
       const buffer = Buffer.from(await file.arrayBuffer());
-      const filePath = path.join(uploadDir, filename);
-      fs.writeFileSync(filePath, buffer);
-      return `${slugNama}/${filename}`;
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${f}.${fileExt}`;
+
+      const { data: uploadData, error } = await supabase.storage
+        .from("spmb")
+        .upload(fileName, buffer, { cacheControl: "3600", upsert: true });
+
+      if (error) throw error;
+
+      const { publicUrl } = supabase.storage
+        .from("spmb")
+        .getPublicUrl(uploadData.path);
+
+      data[f] = publicUrl;
     }
 
-    const data = {
-      nama: namaRaw,
-      tempatLahir: formData.get("tempatLahir"),
-      tanggalLahir: new Date(formData.get("tanggalLahir")),
-      jenisKelamin: formData.get("jenisKelamin"),
-      namaAyah: formData.get("namaAyah"),
-      namaIbu: formData.get("namaIbu"),
-      hp: formData.get("hp"),
-      alamat: formData.get("alamat"),
-
-      akte: await saveFile(formData.get("akte"), "akte.jpg"),
-      kk: await saveFile(formData.get("kk"), "kk.jpg"),
-      ijazah: await saveFile(formData.get("ijazah"), "ijazah.jpg"),
-      pasFoto: await saveFile(formData.get("pasFoto"), "pasfoto.jpg"),
-      buktiPembayaran: await saveFile(
-        formData.get("buktiPembayaran"),
-        "bukti-pembayaran.jpg"
-      ),
-    };
-
+    // Save to database
+    data.tanggalLahir = new Date(data.tanggalLahir);
     await prisma.pendaftar.create({ data });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("SPMB SUBMIT ERROR:", error);
-    return NextResponse.json(
-      { success: false, message: "Gagal submit pendaftaran" },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ success: true }), { status: 201 });
+  } catch (err) {
+    console.error("SPMB SUBMIT ERROR:", err);
+    return new Response(JSON.stringify({ success: false, message: err.message }), {
+      status: 500,
+    });
   }
 }
