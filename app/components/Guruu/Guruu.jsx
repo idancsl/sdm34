@@ -19,7 +19,7 @@ const fetcher = (url) => fetch(url).then((res) => res.json());
 export default function Guruu() {
   const { data, error } = useSWR("/api/admin/guru", fetcher);
   const [selectedGuru, setSelectedGuru] = useState(null);
-
+  const guruList = Array.isArray(data) ? data : [];
   if (error) {
     return (
       <Alert variant="destructive" className="max-w-xl mx-auto my-20">
@@ -52,7 +52,7 @@ export default function Guruu() {
             scrollbar-hide
           "
         >
-          {Array.isArray(data) && data.map((guru) => (
+          {guruList.map((guru) => (
             <motion.div
               key={guru.id}
               whileHover={{ y: -6 }}
