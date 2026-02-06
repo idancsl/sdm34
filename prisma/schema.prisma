@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id       Int     @id @default(autoincrement())
+  username String  @unique
+  password String
+  name     String
+  createdAt DateTime @default(now())
+}
+model Guru {
+  id        Int      @id @default(autoincrement())
+  name      String
+  subject   String
+  photo     String   // bisa path atau URL foto guru
+  jenisKelamin String
+  createdAt DateTime @default(now())
+}
+model Pendaftar {
+  id              String   @id @default(uuid())
+  nama            String
+  tempatLahir     String
+  tanggalLahir    DateTime
+  jenisKelamin    String
+  namaAyah        String
+  namaIbu         String
+  hp              String
+  alamat          String
+
+  akte            String
+  kk              String
+  ijazah          String
+  pasFoto         String
+  buktiPembayaran String
+  verified        Boolean @default(false)
+  createdAt       DateTime @default(now())
+}
